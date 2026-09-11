@@ -48,7 +48,7 @@ async def init_db():
 
 # subjects
 
-async def add_materie(guild_id: int, nume: str, cod: str | None = None) -> int | None:
+async def add_subject(guild_id: int, nume: str, cod: str | None = None) -> int | None:
     """Add a subject. Returns its id, or None if it already exists."""
     async with aiosqlite.connect(DB_PATH) as db:
         try:
@@ -73,7 +73,7 @@ async def get_subjects(guild_id: int) -> list[dict]:
         return [dict(r) for r in await cursor.fetchall()]
 
 
-async def get_subjects_by_nume(guild_id: int, nume: str) -> dict | None:
+async def get_subjects_by_name(guild_id: int, nume: str) -> dict | None:
     """Look up a subject by exact name. None if not found."""
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
@@ -84,6 +84,16 @@ async def get_subjects_by_nume(guild_id: int, nume: str) -> dict | None:
         row = await cursor.fetchone()
         return dict(row) if row else None
 
+async def delete_subject(guild_id: int, nume: str) -> None:
+    """Delete a subject and all its deadlines.""""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("PRAGMA foreign_keys = ON")  # required for CASCADE
+        cursor = await db.execute(
+            "DELETE FROM materii WHERE guild_id = ? AND nume = ?",
+            (guild_id, nume)
+        )
+        await db.commit()
+        return cursor.rowcount > 0
 
 # deadlines
 
